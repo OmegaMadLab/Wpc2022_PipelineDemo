@@ -1,0 +1,124 @@
+# This is a basic workflow to help you get started with Actions
+
+name: DR Orchestration
+
+# Controls when the workflow will run
+on:
+
+# Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow executes the failover of system 1
+  failoverSystem1:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
+      # Login to the Azure sub with the service principal credentials contained in the AZCRED secret
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZCRED }}
+          enable-AzPSSession: true
+      
+      # Runs a single command using the az powershell module on the runner
+      - name: Execute failover 1
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            
+            # This is a sample multiline powershell script
+            Write-host "Executing failover of system 1"     
+          azPSVersion: "latest"
+    
+  # This workflow executes the failover of system 2 and 3
+  failoverSystem2_3:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Login to the Azure sub with the service principal credentials contained in the AZCRED secret
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZCRED }}
+          enable-AzPSSession: true
+
+      # Runs a single command using the az powershell module on the runner
+      - name: Execute failover 2
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+
+            # This is a sample multiline powershell script
+            Write-host "Executing failover of system 2"
+
+          azPSVersion: "latest"
+
+     # Runs a single command using the az powershell module on the runner
+      - name: Execute failover 3
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+
+            # This is a sample multiline powershell script
+            Write-host "Executing failover of system 3"
+
+          azPSVersion: "latest"
+
+  # This workflow asks for a manual action and then executes failover of system 4.
+  # It's executed when failoverSystem1 and failoverSystem2_3 are completed.
+  failoverSystem4:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    
+    # Define dependencies
+    needs: [failoverSystem1, failoverSystem2_3]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Login to the Azure sub with the service principal credentials contained in the AZCRED secret
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZCRED }}
+          enable-AzPSSession: true
+          
+      - name: Manual Workflow Approval
+        # You may pin to the exact commit or the version.
+        # uses: trstringer/manual-approval@367124c80bc5676cbea1b7bbbae6730c50ec66bb
+        uses: trstringer/manual-approval@v1.6.0
+        with:
+          # Required approvers
+          approvers: OmegaMadLab
+          # Secret
+          secret: ${{ github.TOKEN }}
+          issue-title: "Is the external provider ready?"
+
+      # Runs a single command using the az powershell module on the runner
+      - name: Execute failover 4
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+
+            # This is a sample multiline powershell script
+            Write-host "Executing failover of system 4"
+
+          azPSVersion: "latest"
+
+   
+          
+          
